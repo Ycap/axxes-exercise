@@ -1,2 +1,9 @@
 aws_region = "eu-central-1"
+aws_account_id = "654654510727"
 ami = "ami-071878317c449ae48"
+docker_image = "greenfield-project"
+ecr_registry = "654654510727.dkr.ecr.eu-central-1.amazonaws.com"
+ecr_repo = "greenfield-project"
+docker_image_src_path = "../greenfield-project-java/"
+untagged_images = 15
+force_image_rebuild = false
