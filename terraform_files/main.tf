@@ -144,12 +144,13 @@ resource "aws_security_group" "lb_security_group" {
 #Configure the load balancer with the VPC networking
 resource "aws_lb_target_group" "target_group_app" {
   name        = "target-group-app"
-  port        = 80
+  port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = "${aws_default_vpc.default_vpc.id}" # default VPC
   health_check {
 	enabled = true
+  port = 8080
 	path = "/q/health"
   }
 }
