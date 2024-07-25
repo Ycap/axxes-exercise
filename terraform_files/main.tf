@@ -63,6 +63,9 @@ resource "aws_ecs_task_definition" "greenfield_project_task" {
           "hostPort": 8080
         }
       ],
+      "command": [
+        "docker run -p 8080:8080 greenfield-project"
+      ],
       "memory": 2048,
       "cpu": 256
     }
