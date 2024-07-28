@@ -6,7 +6,7 @@ This project is written in Java, so install **Java 21**. The application can be 
 
 ## Building
 
-Build the application using `./mvnw package -Dnative` or by running `make application`. The use the Docker image, build an image using `docker build -t greenfield-project .` or run `make docker`.
+Build the application using `./mvnw package -Dnative` or by running `make application`. Then use the Docker image, build an image using `docker build -t greenfield-project .` or run `make docker`.
 
 ## Running
 
