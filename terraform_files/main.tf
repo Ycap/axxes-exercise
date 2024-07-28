@@ -64,11 +64,16 @@ resource "aws_ecs_task_definition" "greenfield_project_task" {
       "portMappings": [
         {
           "containerPort": 8080,
-          "hostPort": 8080
+          "hostPort": 8080 
         }
       ],
       "cpu": 1024,
-      "memory": 2048
+      "memory": 2048,
+      "healthCheck": {
+          "command": ["CMD-SHELL", "curl -f http://localhost:8080/q/health || exit 1"]
+        }
+      
+
     }
   ]
   DEFINITION
@@ -153,6 +158,14 @@ resource "aws_lb_target_group" "target_group_app" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = "${aws_default_vpc.default_vpc.id}" # default VPC
+  health_check {
+    enabled = true
+    interval = 60
+    path = "/q/health"
+    matcher = 200
+    timeout = 30
+    protocol = "HTTP"
+  }
 }
 
 resource "aws_lb_listener" "listener" {
@@ -172,7 +185,6 @@ resource "aws_ecs_service" "greenfield_project_app_service" {
   task_definition = "${aws_ecs_task_definition.greenfield_project_task.arn}" # Task that will run
   launch_type     = "FARGATE"
   desired_count   = 3 # Set up the number of containers to 3
-  
   load_balancer {
     target_group_arn = "${aws_lb_target_group.target_group_app.arn}" # Reference the target group
     container_name   = "${aws_ecs_task_definition.greenfield_project_task.family}"
@@ -184,6 +196,7 @@ resource "aws_ecs_service" "greenfield_project_app_service" {
     assign_public_ip = true     # Provide the containers with public IPs
     security_groups  = ["${aws_security_group.lb_security_group.id}"] # Set up the security group
   }
+
 }
 #Only allow the traffic from the created load balancer
 resource "aws_security_group" "service_security_group" {
@@ -230,17 +243,3 @@ resource "aws_ecr_lifecycle_policy" "lifecycle_policy" {
 	}
 	EOF
 }
-
-/*resource "null_resource" "build_push_docker_image" {
-	#TODO: fix null_resource trigger so docker image gets pushed to ecr
-	triggers = {
-		detect_docker_source_changes = var.force_image_rebuild == true ? timestamp() : sha256(join("", [for f in fileset(".", "${var.docker_image_src_path}/**") : file(f)]))
-	}
-  provisioner "local-exec" {
-	command = <<-EOT
-	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 654654510727.dkr.ecr.eu-central-1.amazonaws.com
-	docker tag greenfield-project:latest 654654510727.dkr.ecr.eu-central-1.amazonaws.com/greenfield-project:latest
-	docker push 654654510727.dkr.ecr.eu-central-1.amazonaws.com/greenfield-project:latest
-	EOT
-  }
-}*/
