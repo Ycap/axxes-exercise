@@ -46,6 +46,10 @@ resource "docker_registry_image" "push_docker_image" {
 }
 resource "aws_ecs_cluster" "greenfield_project_cluster" {
   name = "greenfield_project_cluster"
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 #Creating task definition
@@ -63,16 +67,20 @@ resource "aws_ecs_task_definition" "greenfield_project_task" {
           "hostPort": 8080
         }
       ],
-      "memory": 2048,
-      "cpu": 256
+      "cpu": 1024,
+      "memory": 2048
     }
   ]
   DEFINITION
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"    # add the AWS VPN network mode as this is required for Fargate
   memory                   = 2048         # Specify the memory the container requires
-  cpu                      = 256         # Specify the CPU the container requires
+  cpu                      = 1024         # Specify the CPU the container requires
   execution_role_arn       = "${aws_iam_role.ecsTaskExecution.arn}"
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture = "X86_64"
+  }
 }
 resource "aws_iam_role" "ecsTaskExecution" {
   #role used to execute ECS Task (Security)
@@ -141,14 +149,10 @@ resource "aws_security_group" "lb_security_group" {
 #Configure the load balancer with the VPC networking
 resource "aws_lb_target_group" "target_group_app" {
   name        = "target-group-app"
-  port        = 80
+  port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = "${aws_default_vpc.default_vpc.id}" # default VPC
-  health_check {
-	enabled = true
-	path = "/q/health"
-  }
 }
 
 resource "aws_lb_listener" "listener" {
@@ -168,7 +172,7 @@ resource "aws_ecs_service" "greenfield_project_app_service" {
   task_definition = "${aws_ecs_task_definition.greenfield_project_task.arn}" # Task that will run
   launch_type     = "FARGATE"
   desired_count   = 3 # Set up the number of containers to 3
-
+  
   load_balancer {
     target_group_arn = "${aws_lb_target_group.target_group_app.arn}" # Reference the target group
     container_name   = "${aws_ecs_task_definition.greenfield_project_task.family}"

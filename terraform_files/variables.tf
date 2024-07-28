@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "The region in which the resources will be deployed"
   type = string
-  default = "eu-north-1"
+  default = "eu-central-1"
 }
 
 variable "aws_account_id" {
